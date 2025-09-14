@@ -200,3 +200,7 @@ def cmd(action: str, **params):
 def gpio_set(pin: int, value: int):
     """Quick GPIO set"""
     return get_client().gpio_set(pin, value)
+
+def gpio_get(pin: int):
+    """Quick GPIO get"""
+    return get_client().gpio_get(pin)
