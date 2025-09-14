@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  edpm-lite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8082:8082"  # Extended dashboard
+    volumes:
+      - /tmp:/tmp
+      - /dev/shm:/dev/shm
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - EDPM_PORT=8080
+      - GPIO_MODE=SIMULATOR
+      - EDPM_DB=/dev/shm/edpm.db
+      - EXTENDED_PROTOCOLS=true
+    networks:
+      - edpm-network
+
+  protocol-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    ports:
+      - "8083:8083"  # Simulator web interface
+    volumes:
+      - /tmp:/tmp
+      - /dev/shm:/dev/shm
+    environment:
+      - I2C_SIMULATOR=true
+      - I2S_SIMULATOR=true
+      - RS485_SIMULATOR=true
+      - SIMULATOR_PORT=8083
+    depends_on:
+      - edpm-lite
+    networks:
+      - edpm-network
+
+  gpio-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    command: python gpio_simulator.py
+    volumes:
+      - /tmp:/tmp
+      - /dev/shm:/dev/shm
+    environment:
+      - GPIO_MODE=SIMULATOR
+      - SIMULATE_SENSORS=true
+    depends_on:
+      - edpm-lite
+    networks:
+      - edpm-network
+
+networks:
+  edpm-network:
+    driver: bridge

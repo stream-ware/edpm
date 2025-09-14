@@ -1,0 +1,27 @@
+# Dockerfile for EDPM Protocol Simulators
+FROM python:3.9-alpine
+
+# Install system dependencies for protocols
+RUN apk add --no-cache \
+    zeromq-dev \
+    gcc \
+    musl-dev \
+    linux-headers \
+    alsa-lib-dev \
+    portaudio-dev
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source files
+COPY . .
+
+# Expose simulator ports
+EXPOSE 8083
+
+# Default command runs all protocol simulators
+CMD ["python", "protocol_simulator.py"]
