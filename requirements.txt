@@ -2,3 +2,5 @@ pyzmq==25.1.1
 aiohttp==3.8.5
 numpy==1.24.3
 websocket-client==1.6.3
+pyserial==3.5
+smbus2==0.4.2

@@ -155,6 +155,12 @@ class EDPMLite:
         )
         return self.send(msg)
     
+    def emit_event(self, event_name: str, data: dict = None):
+        """Emit event (alias for event method)"""
+        if data is None:
+            data = {}
+        return self.event(event_name, **data)
+    
     def on(self, event_name: str, callback: Callable):
         """Register event handler"""
         self.callbacks[event_name] = callback

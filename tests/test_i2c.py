@@ -24,7 +24,8 @@ def test_i2c_basic():
     # Test device scanning
     print("📡 Scanning I2C bus...")
     devices = i2c.scan()
-    print(f"Found devices: {[f'0x{addr:02X} ({i2c.DEVICES.get(addr, \"Unknown\")})' for addr in devices]}")
+    device_list = [f'0x{addr:02X} ({i2c.DEVICES.get(addr, "Unknown")})' for addr in devices]
+    print(f"Found devices: {device_list}")
     
     if not devices:
         print("❌ No I2C devices found")
