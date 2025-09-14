@@ -1,0 +1,23 @@
+{
+  "server": {
+    "zmq_endpoint": "ipc:///tmp/edpm.ipc",
+    "ws_port": 8080,
+    "enable_zmq": true,
+    "enable_ws": true
+  },
+  "logging": {
+    "level": "info",
+    "max_buffer_size": 1000,
+    "flush_interval": 5
+  },
+  "gpio": {
+    "mode": "BCM",
+    "simulator": false,
+    "safe_pins": [4, 17, 27, 22, 5, 6, 13, 19, 26, 18, 23, 24, 25]
+  },
+  "performance": {
+    "max_connections": 100,
+    "message_timeout": 5000,
+    "use_ram_disk": true
+  }
+}

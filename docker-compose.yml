@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  edpm-lite:
+    build: .
+    container_name: edpm-lite
+    ports:
+      - "8080:8080"  # Web UI
+      - "5555:5555"  # ZMQ
+    volumes:
+      - ./app:/app
+      - /dev/shm:/dev/shm
+    environment:
+      - MODE=${MODE:-simulator}
+    restart: unless-stopped
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    container_name: gpio-simulator
+    ports:
+      - "8081:8081"
+    environment:
+      - NOISE_LEVEL=0.1
+    restart: unless-stopped
