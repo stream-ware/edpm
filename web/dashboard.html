@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDPM Extended Protocol Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(74, 175, 80, 0.1);
+            border-radius: 15px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #4CAF50;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+        
+        .panel h2 {
+            margin: 0 0 20px 0;
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #333;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .metric-label {
+            color: #888;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .status-led {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .status-led.on { 
+            background: #4CAF50; 
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .status-led.off { 
+            background: #555; 
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button.danger {
+            background: #F44336;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .log-window {
+            background: #111;
+            padding: 10px;
+            border-radius: 5px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+        }
+        
+        .log-entry.info { color: #4CAF50; }
+        .log-entry.warning { color: #FFC107; }
+        .log-entry.error { color: #F44336; }
+        
+        .chart-container {
+            height: 200px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+            margin: 10px 0;
+            padding: 10px;
+        }
+        
+        .wide-panel {
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 900px) {
+            .wide-panel {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 EDPM Extended Protocol Monitor</h1>
+        <p>Real-time monitoring of GPIO, I2C, I2S, and RS485/Modbus protocols</p>
+    </div>
+    
+    <div class="dashboard">
+        <!-- GPIO Panel -->
+        <div class="panel">
+            <h2>🔌 GPIO Status</h2>
+            <div class="metric">
+                <span class="metric-label">Pin 17:</span>
+                <span class="metric-value">HIGH <span class="status-led on" id="gpio-17"></span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Pin 22:</span>
+                <span class="metric-value">LOW <span class="status-led off" id="gpio-22"></span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Pin 27:</span>
+                <span class="metric-value">PWM 50% <span class="status-led on" id="gpio-27"></span></span>
+            </div>
+            <div class="control-group">
+                <button onclick="toggleGPIO(17)">Toggle Pin 17</button>
+                <button onclick="toggleGPIO(22)">Toggle Pin 22</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="gpioChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- I2C Panel -->
+        <div class="panel">
+            <h2>🌡️ I2C Sensors</h2>
+            <div class="metric">
+                <span class="metric-label">BME280 Temp:</span>
+                <span class="metric-value" id="i2c-temp">24.3°C</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">BME280 Humidity:</span>
+                <span class="metric-value" id="i2c-humidity">45%</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">BME280 Pressure:</span>
+                <span class="metric-value" id="i2c-pressure">1013 hPa</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">ADS1115 CH0:</span>
+                <span class="metric-value" id="adc-0">2.45V</span>
+            </div>
+            <div class="control-group">
+                <button onclick="scanI2C()">Scan Bus</button>
+                <button onclick="readSensors()">Read All</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="i2cChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- I2S Panel -->
+        <div class="panel">
+            <h2>🔊 I2S Audio</h2>
+            <div class="metric">
+                <span class="metric-label">Sample Rate:</span>
+                <span class="metric-value">44100 Hz</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Channels:</span>
+                <span class="metric-value">Stereo</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Level:</span>
+                <span class="metric-value" id="audio-level">-12 dB</span>
+            </div>
+            <div class="control-group">
+                <button onclick="playTestTone(440)">440Hz</button>
+                <button onclick="playTestTone(880)">880Hz</button>
+                <button onclick="playTestTone(1760)">1760Hz</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="audioWaveform"></canvas>
+            </div>
+        </div>
+        
+        <!-- RS485 Panel -->
+        <div class="panel">
+            <h2>⚡ RS485/Modbus Devices</h2>
+            <div class="metric">
+                <span class="metric-label">Device 1 (Temp Controller):</span>
+                <span class="metric-value" id="rs485-temp">25.0°C</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Device 2 (Power Meter):</span>
+                <span class="metric-value" id="rs485-power">3.45 kW</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Device 3 (VFD):</span>
+                <span class="metric-value">50% <span class="status-led on" id="vfd-status"></span></span>
+            </div>
+            <label>VFD Speed Control:</label>
+            <input type="range" id="vfd-speed" min="0" max="100" value="50" 
+                   oninput="updateVFDSpeed(this.value)">
+            <div class="control-group">
+                <button onclick="startVFD()">Start</button>
+                <button onclick="stopVFD()" class="danger">Stop</button>
+            </div>
+        </div>
+        
+        <!-- System Log -->
+        <div class="panel wide-panel">
+            <h2>📝 System Log</h2>
+            <div class="log-window" id="system-log">
+                <div class="log-entry info">[INFO] System initialized</div>
+                <div class="log-entry info">[INFO] All protocols connected</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let ws = null;
+        let charts = {};
+        
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            const wsUrl = `ws://${window.location.hostname}:8080/ws`;
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                addLogEntry('info', 'WebSocket connected');
+            };
+            
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+            
+            ws.onclose = function() {
+                addLogEntry('warning', 'WebSocket disconnected');
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+        
+        // Handle incoming messages
+        function handleMessage(msg) {
+            if (msg.t === 'evt') {
+                handleEvent(msg.d);
+            } else if (msg.t === 'log') {
+                addLogEntry(msg.d.level, msg.d.msg);
+            }
+        }
+        
+        // Handle events
+        function handleEvent(data) {
+            if (data.event === 'sensor_reading') {
+                updateI2CDisplay(data);
+            } else if (data.event === 'gpio_change') {
+                updateGPIODisplay(data);
+            } else if (data.event === 'audio_level') {
+                updateAudioDisplay(data);
+            }
+            updateCharts();
+        }
+        
+        // Update display functions
+        function updateI2CDisplay(data) {
+            if (data.temperature !== undefined) {
+                document.getElementById('i2c-temp').textContent = data.temperature + '°C';
+            }
+            if (data.humidity !== undefined) {
+                document.getElementById('i2c-humidity').textContent = data.humidity + '%';
+            }
+            if (data.pressure !== undefined) {
+                document.getElementById('i2c-pressure').textContent = data.pressure + ' hPa';
+            }
+        }
+        
+        function updateGPIODisplay(data) {
+            if (data.pin && data.value !== undefined) {
+                const led = document.getElementById(`gpio-${data.pin}`);
+                if (led) {
+                    led.className = 'status-led ' + (data.value ? 'on' : 'off');
+                }
+            }
+        }
+        
+        function updateAudioDisplay(data) {
+            if (data.db_level !== undefined) {
+                document.getElementById('audio-level').textContent = data.db_level + ' dB';
+            }
+        }
+        
+        // Control functions
+        function sendCommand(action, params = {}) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const msg = {
+                    v: 1,
+                    t: 'cmd',
+                    d: { action, ...params }
+                };
+                ws.send(JSON.stringify(msg));
+            }
+        }
+        
+        function toggleGPIO(pin) {
+            sendCommand('gpio_toggle', { pin });
+        }
+        
+        function playTestTone(frequency) {
+            sendCommand('play_tone', { frequency, duration: 1.0 });
+            addLogEntry('info', `Playing ${frequency}Hz tone`);
+        }
+        
+        function updateVFDSpeed(speed) {
+            sendCommand('set_vfd_speed', { speed: parseInt(speed) });
+        }
+        
+        function startVFD() {
+            sendCommand('start_vfd');
+            addLogEntry('info', 'VFD started');
+        }
+        
+        function stopVFD() {
+            sendCommand('stop_vfd');
+            addLogEntry('warning', 'VFD stopped');
+        }
+        
+        function scanI2C() {
+            sendCommand('scan_i2c');
+            addLogEntry('info', 'Scanning I2C bus...');
+        }
+        
+        function readSensors() {
+            sendCommand('read_all_sensors');
+            addLogEntry('info', 'Reading all sensors...');
+        }
+        
+        // Chart functions
+        function initializeCharts() {
+            // GPIO Chart
+            const gpioCtx = document.getElementById('gpioChart').getContext('2d');
+            charts.gpio = new Chart(gpioCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'GPIO States',
+                        data: [],
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 1 } }
+                }
+            });
+            
+            // I2C Chart
+            const i2cCtx = document.getElementById('i2cChart').getContext('2d');
+            charts.i2c = new Chart(i2cCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Temperature',
+                        data: [],
+                        borderColor: '#FF5722',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+            
+            // Audio Chart
+            const audioCtx = document.getElementById('audioWaveform').getContext('2d');
+            charts.audio = new Chart(audioCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 50}, (_, i) => i),
+                    datasets: [{
+                        label: 'Audio Level',
+                        data: Array.from({length: 50}, () => Math.random() * 2 - 1),
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { min: -1, max: 1 } }
+                }
+            });
+        }
+        
+        function updateCharts() {
+            // Simulate data updates
+            const now = new Date().toLocaleTimeString();
+            
+            // Update GPIO chart
+            if (charts.gpio) {
+                charts.gpio.data.labels.push(now);
+                charts.gpio.data.datasets[0].data.push(Math.random());
+                if (charts.gpio.data.labels.length > 20) {
+                    charts.gpio.data.labels.shift();
+                    charts.gpio.data.datasets[0].data.shift();
+                }
+                charts.gpio.update('none');
+            }
+            
+            // Update I2C chart
+            if (charts.i2c) {
+                charts.i2c.data.labels.push(now);
+                charts.i2c.data.datasets[0].data.push(20 + Math.random() * 15);
+                if (charts.i2c.data.labels.length > 20) {
+                    charts.i2c.data.labels.shift();
+                    charts.i2c.data.datasets[0].data.shift();
+                }
+                charts.i2c.update('none');
+            }
+            
+            // Update audio waveform
+            if (charts.audio) {
+                charts.audio.data.datasets[0].data = 
+                    Array.from({length: 50}, () => Math.sin(Date.now() / 100) * Math.random());
+                charts.audio.update('none');
+            }
+        }
+        
+        // Logging
+        function addLogEntry(level, message) {
+            const logWindow = document.getElementById('system-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${level}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logWindow.appendChild(entry);
+            logWindow.scrollTop = logWindow.scrollHeight;
+            
+            // Limit log entries
+            while (logWindow.children.length > 100) {
+                logWindow.removeChild(logWindow.firstChild);
+            }
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initWebSocket();
+            initializeCharts();
+            
+            // Update charts periodically
+            setInterval(updateCharts, 1000);
+            
+            addLogEntry('info', 'Dashboard initialized');
+        });
+    </script>
+</body>
+</html>
