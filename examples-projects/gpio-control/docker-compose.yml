@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # EDPM Server with GPIO protocol support
+  edpm-server:
+    image: edpm-lite:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: edpm-gpio-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - EDPM_PORT=8080
+      - EDPM_DEBUG=true
+      - GPIO_SIMULATOR=true
+      - WEB_ENABLED=true
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "server", "--simulator"]
+
+  # EDPM Web Dashboard
+  edpm-dashboard:
+    image: edpm-lite:latest
+    container_name: edpm-gpio-dashboard
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - WEB_PORT=8081
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+    ports:
+      - "8081:8081"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "dashboard", "--port", "8081"]
+
+  # GPIO Control Example Application
+  gpio-example:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edpm-gpio-example
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - GPIO_SIMULATOR=true
+    volumes:
+      - edpm-data:/tmp
+      - ./logs:/app/logs
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+volumes:
+  edmp-data:
+    driver: local
+
+networks:
+  edpm-network:
+    driver: bridge

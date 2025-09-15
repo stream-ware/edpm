@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # EDPM Server with I2C protocol support
+  edpm-server:
+    image: edpm-lite:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: edpm-i2c-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - EDPM_PORT=8080
+      - EDPM_DEBUG=true
+      - I2C_SIMULATOR=true
+      - WEB_ENABLED=true
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+      - /dev/i2c-1:/dev/i2c-1
+    ports:
+      - "8080:8080"
+    networks:
+      - edpm-network
+    privileged: true  # Required for I2C hardware access
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "server", "--i2c-simulator"]
+
+  # EDPM Web Dashboard with sensor visualization
+  edpm-dashboard:
+    image: edpm-lite:latest
+    container_name: edpm-i2c-dashboard
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - WEB_PORT=8081
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+    ports:
+      - "8081:8081"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "dashboard", "--port", "8081"]
+
+  # I2C Sensor Monitoring Application
+  sensor-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edpm-i2c-sensor-monitor
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - I2C_SIMULATOR=true
+    volumes:
+      - edpm-data:/tmp
+      - ./logs:/app/logs
+      - ./data_exports:/app/data_exports
+      - /dev/i2c-1:/dev/i2c-1
+    networks:
+      - edpm-network
+    privileged: true  # Required for I2C hardware access
+    restart: unless-stopped
+
+  # InfluxDB for time-series sensor data storage
+  influxdb:
+    image: influxdb:2.7
+    container_name: edpm-influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=edpm
+      - DOCKER_INFLUXDB_INIT_PASSWORD=edpm_sensors
+      - DOCKER_INFLUXDB_INIT_ORG=edpm_org
+      - DOCKER_INFLUXDB_INIT_BUCKET=sensor_data
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=edpm_admin_token_123
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    ports:
+      - "8086:8086"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+  # Grafana for advanced sensor data visualization
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: edpm-grafana
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=edpm_grafana
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+volumes:
+  edpm-data:
+    driver: local
+  influxdb-data:
+    driver: local
+  influxdb-config:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  edpm-network:
+    driver: bridge

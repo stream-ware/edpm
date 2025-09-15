@@ -1,0 +1,206 @@
+{
+  "edpm_endpoint": "ipc:///tmp/edpm.ipc",
+  "websocket_url": "ws://localhost:8080/ws",
+  "transport": "zmq",
+  "rs485_settings": {
+    "port": "/dev/ttyUSB0",
+    "baudrate": 9600,
+    "parity": "N",
+    "stopbits": 1,
+    "bytesize": 8,
+    "timeout": 1.0,
+    "rts": false,
+    "dtr": false,
+    "description": "RS485 communication settings"
+  },
+  "modbus_scan": {
+    "start_address": 1,
+    "end_address": 20,
+    "timeout": 0.5,
+    "auto_scan_interval": 300,
+    "description": "Automatic Modbus device scanning configuration"
+  },
+  "vfd_control": {
+    "max_speed": 100.0,
+    "min_speed": 0.0,
+    "acceleration_time": 10.0,
+    "deceleration_time": 10.0,
+    "emergency_stop_enabled": true,
+    "interlock_enabled": true,
+    "soft_start_enabled": true,
+    "description": "VFD control parameters and safety limits"
+  },
+  "monitoring": {
+    "update_interval": 2.0,
+    "fast_update_interval": 1.0,
+    "data_retention_hours": 24,
+    "log_to_file": true,
+    "log_file": "/var/log/vfd_system.log",
+    "alarm_thresholds": {
+      "motor_current": {
+        "warning": 80,
+        "alarm": 95,
+        "unit": "%",
+        "description": "Motor current as percentage of rated"
+      },
+      "motor_temperature": {
+        "warning": 70,
+        "alarm": 85,
+        "unit": "°C",
+        "description": "Motor temperature limits"
+      },
+      "power_factor": {
+        "warning": 0.7,
+        "alarm": 0.6,
+        "unit": "",
+        "description": "Minimum power factor thresholds"
+      },
+      "vibration": {
+        "warning": 3.0,
+        "alarm": 5.0,
+        "unit": "mm/s",
+        "description": "Motor vibration limits"
+      },
+      "voltage_imbalance": {
+        "warning": 2.0,
+        "alarm": 5.0,
+        "unit": "%",
+        "description": "Phase voltage imbalance"
+      }
+    },
+    "description": "System monitoring and alarm configuration"
+  },
+  "safety": {
+    "emergency_stop_address": 99,
+    "fault_reset_address": 1,
+    "enable_address": 2,
+    "interlock_monitoring": true,
+    "safety_relay_inputs": [50, 51, 52],
+    "watchdog_timeout": 5.0,
+    "safe_torque_off_enabled": true,
+    "description": "Safety system configuration and monitoring"
+  },
+  "data_logging": {
+    "enabled": true,
+    "database_type": "influxdb",
+    "database_config": {
+      "host": "localhost",
+      "port": 8086,
+      "database": "vfd_system",
+      "username": "admin",
+      "password": "password"
+    },
+    "log_parameters": [
+      "speed_reference",
+      "actual_speed",
+      "output_current",
+      "motor_power",
+      "drive_temperature",
+      "power_factor",
+      "energy_consumption"
+    ],
+    "archive_interval": "1h",
+    "retention_policy": "30d",
+    "description": "Data logging and archival configuration"
+  },
+  "web_dashboard": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 8080,
+    "auto_refresh": 2000,
+    "charts_enabled": true,
+    "alarms_panel": true,
+    "real_time_data": true,
+    "description": "Web dashboard configuration"
+  },
+  "process_control": {
+    "cascade_control": {
+      "enabled": false,
+      "master_setpoint": 75.0,
+      "slave_controllers": [1, 2]
+    },
+    "pid_parameters": {
+      "kp": 1.0,
+      "ki": 0.1,
+      "kd": 0.01,
+      "output_min": 0.0,
+      "output_max": 100.0
+    },
+    "sequencing": {
+      "enabled": false,
+      "startup_sequence": [
+        {"device": 2, "delay": 5},
+        {"device": 1, "delay": 10}
+      ],
+      "shutdown_sequence": [
+        {"device": 1, "delay": 5},
+        {"device": 2, "delay": 0}
+      ]
+    },
+    "description": "Advanced process control features"
+  },
+  "maintenance": {
+    "scheduled_maintenance": {
+      "enabled": true,
+      "intervals": {
+        "lubrication": 720,
+        "bearing_check": 2160,
+        "alignment_check": 4320,
+        "vibration_analysis": 720
+      }
+    },
+    "predictive_maintenance": {
+      "enabled": true,
+      "vibration_monitoring": true,
+      "temperature_trending": true,
+      "current_signature_analysis": true
+    },
+    "description": "Maintenance scheduling and predictive analytics"
+  },
+  "simulator": {
+    "enabled": false,
+    "realistic_responses": true,
+    "fault_injection": {
+      "enabled": false,
+      "fault_types": ["overcurrent", "overtemperature", "communication_loss"],
+      "random_faults": false,
+      "fault_probability": 0.01
+    },
+    "motor_simulation": {
+      "inertia": 0.1,
+      "friction": 0.05,
+      "load_variation": 0.1
+    },
+    "description": "Hardware simulator configuration for testing"
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "smtp_server": "smtp.company.com",
+      "smtp_port": 587,
+      "username": "vfd-system@company.com",
+      "password": "password",
+      "recipients": ["maintenance@company.com", "operations@company.com"]
+    },
+    "sms": {
+      "enabled": false,
+      "api_key": "your_sms_api_key",
+      "phone_numbers": ["+1234567890"]
+    },
+    "slack": {
+      "enabled": false,
+      "webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    },
+    "description": "Notification system configuration"
+  },
+  "system": {
+    "debug_mode": false,
+    "log_level": "INFO",
+    "max_log_file_size": "10MB",
+    "log_rotation_count": 5,
+    "performance_monitoring": true,
+    "memory_limit": "512MB",
+    "cpu_limit": "80%",
+    "description": "System-level configuration"
+  }
+}

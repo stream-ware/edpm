@@ -1,0 +1,228 @@
+{
+  "devices": {
+    "microphone": {
+      "name": "I2S Microphone",
+      "type": "input",
+      "description": "Digital I2S microphone for audio capture",
+      "supported_sample_rates": [8000, 16000, 22050, 44100, 48000],
+      "supported_channels": [1, 2],
+      "supported_bit_depths": [16, 24],
+      "default_config": {
+        "sample_rate": 44100,
+        "channels": 1,
+        "bit_depth": 16
+      },
+      "hardware_examples": [
+        {
+          "model": "SPH0645",
+          "manufacturer": "Knowles",
+          "description": "Ultra-low noise digital microphone",
+          "sensitivity": "-26 dBFS",
+          "snr": "65 dB"
+        },
+        {
+          "model": "INMP441",
+          "manufacturer": "InvenSense",
+          "description": "High performance digital microphone",
+          "sensitivity": "-26 dBFS",
+          "snr": "61 dB"
+        }
+      ]
+    },
+    "speaker": {
+      "name": "I2S Speaker/DAC",
+      "type": "output",
+      "description": "Digital I2S DAC and amplifier for audio output",
+      "supported_sample_rates": [44100, 48000, 96000],
+      "supported_channels": [1, 2],
+      "supported_bit_depths": [16, 24, 32],
+      "default_config": {
+        "sample_rate": 44100,
+        "channels": 2,
+        "bit_depth": 16
+      },
+      "hardware_examples": [
+        {
+          "model": "MAX98357A",
+          "manufacturer": "Maxim Integrated",
+          "description": "Class D amplifier with I2S input",
+          "power_output": "3.2W @ 4Ω",
+          "thd": "0.013%"
+        },
+        {
+          "model": "PCM5102A",
+          "manufacturer": "Texas Instruments",
+          "description": "High-performance stereo DAC",
+          "snr": "112 dB",
+          "thd": "0.0004%"
+        }
+      ]
+    }
+  },
+  "test_signals": {
+    "calibration_tones": [
+      {"frequency": 100, "description": "Low frequency test", "duration": 2.0},
+      {"frequency": 440, "description": "A4 reference tone", "duration": 3.0},
+      {"frequency": 1000, "description": "1kHz reference", "duration": 2.0},
+      {"frequency": 4000, "description": "High frequency test", "duration": 2.0},
+      {"frequency": 8000, "description": "Upper range test", "duration": 2.0}
+    ],
+    "sweep_configurations": {
+      "audio_range": {
+        "start_frequency": 20,
+        "end_frequency": 20000,
+        "duration": 10,
+        "type": "logarithmic"
+      },
+      "voice_range": {
+        "start_frequency": 85,
+        "end_frequency": 3400,
+        "duration": 5,
+        "type": "linear"
+      },
+      "telephony": {
+        "start_frequency": 300,
+        "end_frequency": 3400,
+        "duration": 3,
+        "type": "linear"
+      }
+    },
+    "noise_types": {
+      "white": {
+        "description": "Equal power across all frequencies",
+        "use_case": "General testing and masking"
+      },
+      "pink": {
+        "description": "Equal power per octave",
+        "use_case": "Audio equipment testing"
+      },
+      "brown": {
+        "description": "Brownian noise, deeper than pink",
+        "use_case": "Relaxation and focus applications"
+      }
+    }
+  },
+  "audio_formats": {
+    "pcm_16": {
+      "description": "16-bit PCM",
+      "bit_depth": 16,
+      "dynamic_range": "96 dB",
+      "use_case": "Standard audio quality"
+    },
+    "pcm_24": {
+      "description": "24-bit PCM",
+      "bit_depth": 24,
+      "dynamic_range": "144 dB",
+      "use_case": "Professional audio"
+    },
+    "pcm_32": {
+      "description": "32-bit PCM",
+      "bit_depth": 32,
+      "dynamic_range": "192 dB",
+      "use_case": "High-end audio processing"
+    }
+  },
+  "i2s_pin_configurations": {
+    "raspberry_pi": {
+      "bclk": {
+        "gpio": 18,
+        "pin": 12,
+        "description": "Bit clock"
+      },
+      "lrclk": {
+        "gpio": 19,
+        "pin": 35,
+        "description": "Left/Right clock (Word Select)"
+      },
+      "din": {
+        "gpio": 20,
+        "pin": 38,
+        "description": "Data input from microphone"
+      },
+      "dout": {
+        "gpio": 21,
+        "pin": 40,
+        "description": "Data output to DAC/amplifier"
+      }
+    }
+  },
+  "analysis_windows": {
+    "rectangular": {
+      "description": "No windowing, sharp transitions",
+      "use_case": "Transient analysis"
+    },
+    "hamming": {
+      "description": "Smooth rolloff, good frequency resolution",
+      "use_case": "General spectrum analysis"
+    },
+    "hanning": {
+      "description": "Similar to Hamming, slightly different shape",
+      "use_case": "Spectral analysis"
+    },
+    "blackman": {
+      "description": "Very smooth, reduced spectral leakage",
+      "use_case": "High dynamic range analysis"
+    }
+  },
+  "frequency_bands": {
+    "sub_bass": {"start": 20, "end": 60, "description": "Felt more than heard"},
+    "bass": {"start": 60, "end": 250, "description": "Fundamental bass frequencies"},
+    "low_midrange": {"start": 250, "end": 500, "description": "Lower midrange"},
+    "midrange": {"start": 500, "end": 2000, "description": "Main vocal range"},
+    "upper_midrange": {"start": 2000, "end": 4000, "description": "Clarity and presence"},
+    "presence": {"start": 4000, "end": 6000, "description": "Speech intelligibility"},
+    "brilliance": {"start": 6000, "end": 20000, "description": "Air and sparkle"}
+  },
+  "audio_standards": {
+    "cd_quality": {
+      "sample_rate": 44100,
+      "bit_depth": 16,
+      "channels": 2,
+      "description": "Compact Disc quality"
+    },
+    "broadcast": {
+      "sample_rate": 48000,
+      "bit_depth": 16,
+      "channels": 2,
+      "description": "Professional broadcast standard"
+    },
+    "high_res": {
+      "sample_rate": 96000,
+      "bit_depth": 24,
+      "channels": 2,
+      "description": "High resolution audio"
+    },
+    "telephone": {
+      "sample_rate": 8000,
+      "bit_depth": 16,
+      "channels": 1,
+      "description": "Telephone quality"
+    }
+  },
+  "measurement_standards": {
+    "thd_n": {
+      "description": "Total Harmonic Distortion + Noise",
+      "typical_values": {
+        "excellent": "< 0.01%",
+        "good": "< 0.1%",
+        "acceptable": "< 1.0%"
+      }
+    },
+    "snr": {
+      "description": "Signal-to-Noise Ratio",
+      "typical_values": {
+        "excellent": "> 100 dB",
+        "good": "> 80 dB",
+        "acceptable": "> 60 dB"
+      }
+    },
+    "dynamic_range": {
+      "description": "Dynamic Range",
+      "typical_values": {
+        "16_bit": "96 dB theoretical",
+        "24_bit": "144 dB theoretical",
+        "32_bit": "192 dB theoretical"
+      }
+    }
+  }
+}

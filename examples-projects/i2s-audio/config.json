@@ -1,0 +1,85 @@
+{
+    "edpm_endpoint": "ipc:///tmp/edpm.ipc",
+    "websocket_url": "ws://localhost:8080/ws",
+    "transport": "zmq",
+    "audio_settings": {
+        "sample_rate": 44100,
+        "channels": 2,
+        "bit_depth": 16,
+        "buffer_size": 1024,
+        "device_name": "I2S Audio Device"
+    },
+    "tone_generator": {
+        "default_frequency": 440,
+        "default_amplitude": 0.5,
+        "default_duration": 5.0,
+        "waveform_type": "sine",
+        "fade_in_duration": 0.1,
+        "fade_out_duration": 0.1
+    },
+    "recording": {
+        "max_duration": 30.0,
+        "auto_save": true,
+        "save_directory": "./recordings",
+        "file_format": "wav",
+        "compression": "none"
+    },
+    "analysis": {
+        "fft_size": 2048,
+        "window_type": "hamming",
+        "overlap": 0.5,
+        "update_rate": 10.0,
+        "frequency_bands": [
+            {"name": "sub_bass", "start": 20, "end": 60},
+            {"name": "bass", "start": 60, "end": 250},
+            {"name": "low_mid", "start": 250, "end": 500},
+            {"name": "midrange", "start": 500, "end": 2000},
+            {"name": "upper_mid", "start": 2000, "end": 4000},
+            {"name": "presence", "start": 4000, "end": 6000},
+            {"name": "brilliance", "start": 6000, "end": 20000}
+        ]
+    },
+    "effects": {
+        "low_pass_cutoff": 8000,
+        "high_pass_cutoff": 100,
+        "echo_delay": 0.3,
+        "echo_decay": 0.6,
+        "reverb_room_size": 0.5,
+        "reverb_damping": 0.5,
+        "compressor_threshold": -20,
+        "compressor_ratio": 4.0
+    },
+    "monitoring": {
+        "level_update_rate": 20.0,
+        "spectrum_update_rate": 10.0,
+        "history_length": 300,
+        "peak_hold_time": 2.0
+    },
+    "alerts": {
+        "enabled": true,
+        "peak_threshold": 0.95,
+        "rms_threshold": 0.7,
+        "silence_threshold": 0.001,
+        "silence_duration": 5.0
+    },
+    "streaming": {
+        "enabled": false,
+        "server_url": "http://localhost:8000/stream",
+        "format": "mp3",
+        "bitrate": 128
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "i2s_audio.log",
+        "max_size_mb": 10,
+        "backup_count": 3,
+        "log_audio_events": true
+    },
+    "simulator": {
+        "enabled": true,
+        "realistic_timing": true,
+        "noise_level": 0.01,
+        "frequency_drift": 0.1,
+        "amplitude_variation": 0.05
+    }
+}

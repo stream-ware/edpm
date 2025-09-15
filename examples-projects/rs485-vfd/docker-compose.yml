@@ -1,0 +1,243 @@
+version: '3.8'
+
+services:
+  # EDPM Server with RS485 support
+  edpm-server:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: edpm-rs485-server
+    ports:
+      - "5555:5555"  # ZeroMQ endpoint
+      - "8080:8080"  # Web dashboard
+    volumes:
+      - /tmp:/tmp  # IPC socket
+      - ./config:/app/config
+      - ./data:/app/data
+      - /var/log:/var/log
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0  # RS485 adapter
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - EDPM_PORT=5555
+      - EDPM_DEBUG=false
+      - RS485_ENABLED=true
+      - RS485_PORT=/dev/ttyUSB0
+      - RS485_BAUDRATE=9600
+      - RS485_SIMULATOR=false
+      - WEB_ENABLED=true
+      - LOG_LEVEL=INFO
+    command: ["python3", "-m", "edpm.cli", "server", "--protocols", "rs485", "--web"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Web Dashboard
+  dashboard:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: edpm-rs485-dashboard
+    ports:
+      - "8081:8080"  # Alternative dashboard port
+    volumes:
+      - /tmp:/tmp
+      - ./web:/app/web
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - WEB_PORT=8080
+    command: ["python3", "-m", "edpm.cli", "dashboard"]
+    depends_on:
+      - edpm-server
+    networks:
+      - vfd-network
+
+  # RS485 VFD Control Application
+  vfd-controller:
+    build: .
+    container_name: rs485-vfd-controller
+    volumes:
+      - /tmp:/tmp  # IPC socket
+      - ./config.json:/app/config.json
+      - ./modbus_devices.json:/app/modbus_devices.json
+      - ./data:/app/data
+      - /var/log:/var/log
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0  # RS485 adapter
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - RS485_PORT=/dev/ttyUSB0
+      - RS485_BAUDRATE=9600
+      - RS485_SIMULATOR=false
+      - LOG_LEVEL=INFO
+    depends_on:
+      - edpm-server
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # InfluxDB for time-series data storage
+  influxdb:
+    image: influxdb:2.6-alpine
+    container_name: rs485-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influx_data:/var/lib/influxdb2
+      - influx_config:/etc/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password123
+      - DOCKER_INFLUXDB_INIT_ORG=edpm-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=vfd-data
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=vfd-admin-token
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Grafana for data visualization
+  grafana:
+    image: grafana/grafana:9.5.2
+    container_name: rs485-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/vfd-overview.json
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.43.0
+    container_name: rs485-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:v1.5.0
+    container_name: rs485-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Redis for caching and real-time data
+  redis:
+    image: redis:7.0-alpine
+    container_name: rs485-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # Portainer for container management
+  portainer:
+    image: portainer/portainer-ce:2.18.3
+    container_name: rs485-portainer
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    command: --admin-password-file /data/admin_password
+    restart: unless-stopped
+    networks:
+      - vfd-network
+
+  # RS485 Device Simulator (for testing without hardware)
+  rs485-simulator:
+    build: .
+    container_name: rs485-simulator
+    volumes:
+      - /tmp:/tmp
+    environment:
+      - RS485_SIMULATOR=true
+      - SIMULATOR_DEVICES=1,2,3,10,11,20
+      - LOG_LEVEL=INFO
+    command: ["python3", "-c", "from edpm.protocols.rs485 import RS485Simulator; import asyncio; asyncio.run(RS485Simulator().run())"]
+    profiles:
+      - simulator
+    networks:
+      - vfd-network
+
+volumes:
+  influx_data:
+    driver: local
+  influx_config:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  redis_data:
+    driver: local
+  portainer_data:
+    driver: local
+
+networks:
+  vfd-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Health check and monitoring
+x-healthcheck-config: &healthcheck
+  interval: 30s
+  timeout: 10s
+  start_period: 60s
+  retries: 3

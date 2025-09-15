@@ -1,0 +1,71 @@
+{
+    "edpm_endpoint": "ipc:///tmp/edpm.ipc",
+    "websocket_url": "ws://localhost:8080/ws",
+    "transport": "zmq",
+    "i2c_bus": 1,
+    "scan_range": {
+        "start": 8,
+        "end": 119
+    },
+    "monitoring_interval": 5.0,
+    "data_retention_hours": 24,
+    "alert_thresholds": {
+        "temperature": {
+            "min": -10,
+            "max": 50,
+            "critical_min": -20,
+            "critical_max": 70
+        },
+        "humidity": {
+            "min": 10,
+            "max": 90,
+            "critical_min": 0,
+            "critical_max": 100
+        },
+        "pressure": {
+            "min": 950,
+            "max": 1050,
+            "critical_min": 900,
+            "critical_max": 1100
+        }
+    },
+    "sensor_settings": {
+        "BME280": {
+            "enabled": true,
+            "sampling_rate": "normal",
+            "oversampling": {
+                "temperature": 2,
+                "pressure": 5,
+                "humidity": 1
+            }
+        },
+        "MPU6050": {
+            "enabled": true,
+            "accel_range": "2g",
+            "gyro_range": "250dps",
+            "filter_bandwidth": 94
+        },
+        "DS3231": {
+            "enabled": true,
+            "temperature_conversion_rate": "64s"
+        }
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "i2c_sensor.log",
+        "max_size_mb": 10,
+        "backup_count": 3
+    },
+    "data_export": {
+        "enabled": true,
+        "format": "json",
+        "interval_minutes": 60,
+        "directory": "./data_exports"
+    },
+    "simulator": {
+        "enabled": true,
+        "realistic_timing": true,
+        "noise_level": 0.1,
+        "drift_simulation": true
+    }
+}

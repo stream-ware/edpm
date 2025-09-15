@@ -1,0 +1,17 @@
+{
+    "edpm_endpoint": "ipc:///tmp/edpm.ipc",
+    "websocket_url": "ws://localhost:8080/ws",
+    "transport": "zmq",
+    "gpio_pins": [17, 18, 19, 20],
+    "pwm_pin": 21,
+    "demo_duration": 60,
+    "cycle_delay": 2.0,
+    "logging": {
+        "level": "INFO",
+        "file": "gpio_example.log"
+    },
+    "simulator": {
+        "enabled": true,
+        "realistic_timing": true
+    }
+}

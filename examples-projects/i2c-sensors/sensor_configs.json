@@ -1,0 +1,343 @@
+{
+  "sensors": {
+    "0x76": {
+      "name": "BME280",
+      "type": "environmental",
+      "description": "Temperature, Humidity, Pressure Sensor",
+      "manufacturer": "Bosch",
+      "datasheet": "https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf",
+      "registers": {
+        "chip_id": {
+          "address": "0xD0",
+          "expected": "0x60",
+          "description": "Chip identification register"
+        },
+        "reset": {
+          "address": "0xE0",
+          "description": "Soft reset register"
+        },
+        "ctrl_hum": {
+          "address": "0xF2",
+          "description": "Humidity control register"
+        },
+        "status": {
+          "address": "0xF3",
+          "description": "Status register"
+        },
+        "ctrl_meas": {
+          "address": "0xF4",
+          "description": "Measurement control register"
+        },
+        "config": {
+          "address": "0xF5",
+          "description": "Configuration register"
+        },
+        "press_msb": {
+          "address": "0xF7",
+          "description": "Pressure data MSB"
+        },
+        "temp_msb": {
+          "address": "0xFA",
+          "description": "Temperature data MSB"
+        },
+        "hum_msb": {
+          "address": "0xFD",
+          "description": "Humidity data MSB"
+        }
+      },
+      "calibration": {
+        "temp_press_start": "0x88",
+        "temp_press_end": "0x9F",
+        "humidity_start": "0xE1",
+        "humidity_end": "0xE7"
+      },
+      "typical_values": {
+        "temperature": {"min": -40, "max": 85, "unit": "°C"},
+        "pressure": {"min": 300, "max": 1100, "unit": "hPa"},
+        "humidity": {"min": 0, "max": 100, "unit": "%RH"}
+      }
+    },
+    "0x77": {
+      "name": "BMP280",
+      "type": "environmental",
+      "description": "Temperature and Pressure Sensor",
+      "manufacturer": "Bosch",
+      "registers": {
+        "chip_id": {
+          "address": "0xD0",
+          "expected": "0x58",
+          "description": "Chip identification register"
+        },
+        "ctrl_meas": {
+          "address": "0xF4",
+          "description": "Measurement control register"
+        },
+        "config": {
+          "address": "0xF5",
+          "description": "Configuration register"
+        },
+        "press_msb": {
+          "address": "0xF7",
+          "description": "Pressure data MSB"
+        },
+        "temp_msb": {
+          "address": "0xFA",
+          "description": "Temperature data MSB"
+        }
+      },
+      "typical_values": {
+        "temperature": {"min": -40, "max": 85, "unit": "°C"},
+        "pressure": {"min": 300, "max": 1100, "unit": "hPa"}
+      }
+    },
+    "0x68": {
+      "name": "MPU6050",
+      "type": "motion",
+      "description": "6-axis Accelerometer and Gyroscope",
+      "manufacturer": "InvenSense",
+      "datasheet": "https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf",
+      "registers": {
+        "who_am_i": {
+          "address": "0x75",
+          "expected": "0x68",
+          "description": "Device identification register"
+        },
+        "pwr_mgmt_1": {
+          "address": "0x6B",
+          "description": "Power management register 1"
+        },
+        "pwr_mgmt_2": {
+          "address": "0x6C",
+          "description": "Power management register 2"
+        },
+        "config": {
+          "address": "0x1A",
+          "description": "Configuration register"
+        },
+        "gyro_config": {
+          "address": "0x1B",
+          "description": "Gyroscope configuration"
+        },
+        "accel_config": {
+          "address": "0x1C",
+          "description": "Accelerometer configuration"
+        },
+        "accel_xout_h": {
+          "address": "0x3B",
+          "description": "Accelerometer X-axis high byte"
+        },
+        "accel_yout_h": {
+          "address": "0x3D",
+          "description": "Accelerometer Y-axis high byte"
+        },
+        "accel_zout_h": {
+          "address": "0x3F",
+          "description": "Accelerometer Z-axis high byte"
+        },
+        "temp_out_h": {
+          "address": "0x41",
+          "description": "Temperature high byte"
+        },
+        "gyro_xout_h": {
+          "address": "0x43",
+          "description": "Gyroscope X-axis high byte"
+        },
+        "gyro_yout_h": {
+          "address": "0x45",
+          "description": "Gyroscope Y-axis high byte"
+        },
+        "gyro_zout_h": {
+          "address": "0x47",
+          "description": "Gyroscope Z-axis high byte"
+        }
+      },
+      "typical_values": {
+        "accel_x": {"min": -2, "max": 2, "unit": "g"},
+        "accel_y": {"min": -2, "max": 2, "unit": "g"},
+        "accel_z": {"min": -2, "max": 2, "unit": "g"},
+        "gyro_x": {"min": -250, "max": 250, "unit": "°/s"},
+        "gyro_y": {"min": -250, "max": 250, "unit": "°/s"},
+        "gyro_z": {"min": -250, "max": 250, "unit": "°/s"},
+        "temperature": {"min": -40, "max": 85, "unit": "°C"}
+      }
+    },
+    "0x69": {
+      "name": "MPU6050_ALT",
+      "type": "motion",
+      "description": "6-axis Accelerometer and Gyroscope (Alternative Address)",
+      "manufacturer": "InvenSense",
+      "registers": {
+        "who_am_i": {
+          "address": "0x75",
+          "expected": "0x68",
+          "description": "Device identification register"
+        }
+      },
+      "note": "Same as MPU6050 but with AD0 pin connected to VDD"
+    },
+    "0x57": {
+      "name": "DS3231",
+      "type": "rtc",
+      "description": "Extremely Accurate Real-Time Clock",
+      "manufacturer": "Maxim Integrated",
+      "registers": {
+        "seconds": {
+          "address": "0x00",
+          "description": "Seconds register (BCD format)"
+        },
+        "minutes": {
+          "address": "0x01",
+          "description": "Minutes register (BCD format)"
+        },
+        "hours": {
+          "address": "0x02",
+          "description": "Hours register (BCD format)"
+        },
+        "day": {
+          "address": "0x03",
+          "description": "Day of week register"
+        },
+        "date": {
+          "address": "0x04",
+          "description": "Date register (BCD format)"
+        },
+        "month": {
+          "address": "0x05",
+          "description": "Month register (BCD format)"
+        },
+        "year": {
+          "address": "0x06",
+          "description": "Year register (BCD format)"
+        },
+        "control": {
+          "address": "0x0E",
+          "description": "Control register"
+        },
+        "status": {
+          "address": "0x0F",
+          "description": "Status register"
+        },
+        "temp_msb": {
+          "address": "0x11",
+          "description": "Temperature MSB"
+        },
+        "temp_lsb": {
+          "address": "0x12",
+          "description": "Temperature LSB"
+        }
+      },
+      "typical_values": {
+        "temperature": {"min": -40, "max": 85, "unit": "°C"}
+      }
+    },
+    "0x48": {
+      "name": "ADS1115",
+      "type": "adc",
+      "description": "16-bit ADC with Programmable Gain Amplifier",
+      "manufacturer": "Texas Instruments",
+      "registers": {
+        "conversion": {
+          "address": "0x00",
+          "description": "Conversion result register"
+        },
+        "config": {
+          "address": "0x01",
+          "description": "Configuration register"
+        },
+        "lo_thresh": {
+          "address": "0x02",
+          "description": "Low threshold register"
+        },
+        "hi_thresh": {
+          "address": "0x03",
+          "description": "High threshold register"
+        }
+      },
+      "typical_values": {
+        "voltage": {"min": -4.096, "max": 4.096, "unit": "V"}
+      }
+    },
+    "0x1D": {
+      "name": "ADXL345",
+      "type": "accelerometer",
+      "description": "3-axis Digital Accelerometer",
+      "manufacturer": "Analog Devices",
+      "registers": {
+        "device_id": {
+          "address": "0x00",
+          "expected": "0xE5",
+          "description": "Device ID register"
+        },
+        "power_ctl": {
+          "address": "0x2D",
+          "description": "Power control register"
+        },
+        "data_format": {
+          "address": "0x31",
+          "description": "Data format register"
+        },
+        "datax0": {
+          "address": "0x32",
+          "description": "X-axis data LSB"
+        },
+        "datay0": {
+          "address": "0x34",
+          "description": "Y-axis data LSB"
+        },
+        "dataz0": {
+          "address": "0x36",
+          "description": "Z-axis data LSB"
+        }
+      },
+      "typical_values": {
+        "accel_x": {"min": -16, "max": 16, "unit": "g"},
+        "accel_y": {"min": -16, "max": 16, "unit": "g"},
+        "accel_z": {"min": -16, "max": 16, "unit": "g"}
+      }
+    },
+    "0x3C": {
+      "name": "SSD1306",
+      "type": "display",
+      "description": "OLED Display Controller",
+      "manufacturer": "Solomon Systech",
+      "registers": {
+        "command": {
+          "address": "0x00",
+          "description": "Command register"
+        },
+        "data": {
+          "address": "0x40",
+          "description": "Data register"
+        }
+      },
+      "note": "128x64 or 128x32 OLED display"
+    },
+    "0x50": {
+      "name": "AT24C32",
+      "type": "eeprom",
+      "description": "32K I2C Serial EEPROM",
+      "manufacturer": "Atmel/Microchip",
+      "typical_values": {
+        "capacity": {"value": 4096, "unit": "bytes"}
+      },
+      "note": "Often found on DS3231 RTC modules"
+    }
+  },
+  "common_addresses": {
+    "temperature_sensors": ["0x48", "0x49", "0x4A", "0x4B"],
+    "accelerometers": ["0x1D", "0x53", "0x68", "0x69"],
+    "environmental_sensors": ["0x76", "0x77"],
+    "displays": ["0x3C", "0x3D"],
+    "eeproms": ["0x50", "0x51", "0x52", "0x53", "0x54", "0x55", "0x56", "0x57"],
+    "rtc_modules": ["0x57", "0x68"]
+  },
+  "scanning_notes": {
+    "reserved_addresses": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x05", "0x06", "0x07"],
+    "broadcast_addresses": ["0x78", "0x79", "0x7A", "0x7B", "0x7C", "0x7D", "0x7E", "0x7F"],
+    "scan_range": {
+      "start": "0x08",
+      "end": "0x77",
+      "note": "Standard I2C device address range"
+    }
+  }
+}

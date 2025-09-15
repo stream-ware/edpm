@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # EDPM Server with I2S audio protocol support
+  edpm-server:
+    image: edpm-lite:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: edpm-i2s-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - EDPM_PORT=8080
+      - EDPM_DEBUG=true
+      - I2S_SIMULATOR=true
+      - WEB_ENABLED=true
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+      - pulse-socket:/tmp
+    ports:
+      - "8080:8080"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "server", "--i2s-simulator"]
+
+  # PulseAudio server for audio routing
+  pulseaudio:
+    image: jrottenberg/ffmpeg:4.4-alpine
+    container_name: edpm-pulseaudio
+    environment:
+      - PULSE_SERVER=unix:/tmp/pulse-socket
+    volumes:
+      - pulse-socket:/tmp
+    command: ["pulseaudio", "--system", "--disallow-exit", "--disable-shm", "--exit-idle-time=-1"]
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+  # EDPM Web Dashboard with audio visualization
+  edpm-dashboard:
+    image: edpm-lite:latest
+    container_name: edpm-i2s-dashboard
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - WEB_PORT=8081
+    volumes:
+      - edpm-data:/tmp
+      - ../../web:/app/web:ro
+    ports:
+      - "8081:8081"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-m", "edpm.cli", "dashboard", "--port", "8081"]
+
+  # I2S Audio Processing Application
+  audio-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edpm-i2s-audio-processor
+    depends_on:
+      - edpm-server
+      - pulseaudio
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - I2S_SIMULATOR=true
+      - PULSE_SERVER=unix:/tmp/pulse-socket
+    volumes:
+      - edpm-data:/tmp
+      - ./recordings:/app/recordings
+      - ./logs:/app/logs
+      - pulse-socket:/tmp
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+  # Icecast streaming server for remote audio monitoring
+  icecast:
+    image: moul/icecast
+    container_name: edpm-icecast
+    environment:
+      - ICECAST_SOURCE_PASSWORD=edpm_source
+      - ICECAST_ADMIN_PASSWORD=edpm_admin
+      - ICECAST_RELAY_PASSWORD=edpm_relay
+      - ICECAST_ADMIN_USERNAME=admin
+      - ICECAST_HOSTNAME=localhost
+    ports:
+      - "8000:8000"
+    networks:
+      - edpm-network
+    restart: unless-stopped
+
+  # FFmpeg for audio format conversion and streaming
+  ffmpeg-streamer:
+    image: jrottenberg/ffmpeg:4.4-alpine
+    container_name: edpm-ffmpeg-streamer
+    depends_on:
+      - icecast
+      - pulseaudio
+    environment:
+      - PULSE_SERVER=unix:/tmp/pulse-socket
+    volumes:
+      - pulse-socket:/tmp
+      - ./recordings:/recordings:ro
+    networks:
+      - edpm-network
+    restart: "no"  # Run on-demand
+    command: |
+      sh -c "
+        echo 'FFmpeg streamer ready for audio streaming'
+        while true; do
+          sleep 3600
+        done
+      "
+
+  # Audio analysis and visualization service
+  audio-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edpm-audio-analyzer
+    depends_on:
+      - edpm-server
+    environment:
+      - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
+      - ANALYSIS_MODE=continuous
+    volumes:
+      - edpm-data:/tmp
+      - ./recordings:/app/recordings:ro
+      - ./analysis_output:/app/analysis_output
+    networks:
+      - edpm-network
+    restart: unless-stopped
+    command: ["python", "-c", "import time; print('Audio analyzer ready'); time.sleep(3600)"]
+
+volumes:
+  edpm-data:
+    driver: local
+  pulse-socket:
+    driver: local
+
+networks:
+  edpm-network:
+    driver: bridge

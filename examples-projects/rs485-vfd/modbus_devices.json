@@ -1,0 +1,371 @@
+{
+  "vfd_devices": {
+    "1": {
+      "name": "Main Motor VFD",
+      "manufacturer": "Schneider Electric",
+      "model": "ATV320",
+      "type": "schneider_atv",
+      "rated_power": 5.5,
+      "rated_current": 12.0,
+      "rated_voltage": 380,
+      "rated_frequency": 50,
+      "description": "Main conveyor motor drive",
+      "registers": {
+        "speed_reference": {
+          "address": 1,
+          "type": "holding",
+          "scale": 0.01,
+          "unit": "%",
+          "description": "Speed reference (0-100%)"
+        },
+        "control_word": {
+          "address": 0,
+          "type": "holding",
+          "description": "Control word for start/stop commands"
+        },
+        "status_word": {
+          "address": 100,
+          "type": "input",
+          "description": "Status word indicating drive state"
+        },
+        "actual_speed": {
+          "address": 101,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "RPM",
+          "description": "Actual motor speed"
+        },
+        "output_frequency": {
+          "address": 102,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "Hz",
+          "description": "Output frequency to motor"
+        },
+        "output_voltage": {
+          "address": 103,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "V",
+          "description": "Output voltage to motor"
+        },
+        "output_current": {
+          "address": 104,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "A",
+          "description": "Output current to motor"
+        },
+        "motor_power": {
+          "address": 105,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "kW",
+          "description": "Motor power consumption"
+        },
+        "motor_torque": {
+          "address": 106,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "%",
+          "description": "Motor torque percentage"
+        },
+        "drive_temperature": {
+          "address": 107,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "°C",
+          "description": "Drive internal temperature"
+        },
+        "fault_code": {
+          "address": 108,
+          "type": "input",
+          "description": "Current fault code (0 = no fault)"
+        }
+      },
+      "control_bits": {
+        "run": 0,
+        "stop": 1,
+        "direction": 2,
+        "fault_reset": 7
+      },
+      "status_bits": {
+        "ready": 0,
+        "running": 1,
+        "fault": 3,
+        "warning": 7
+      }
+    },
+    "2": {
+      "name": "Auxiliary Pump VFD",
+      "manufacturer": "ABB",
+      "model": "ACS580",
+      "type": "abb_acs",
+      "rated_power": 2.2,
+      "rated_current": 5.5,
+      "rated_voltage": 380,
+      "rated_frequency": 50,
+      "description": "Cooling system pump drive",
+      "registers": {
+        "speed_reference": {
+          "address": 1,
+          "type": "holding",
+          "scale": 0.01,
+          "unit": "%",
+          "description": "Speed reference (0-100%)"
+        },
+        "control_word": {
+          "address": 0,
+          "type": "holding",
+          "description": "Control word for start/stop commands"
+        },
+        "status_word": {
+          "address": 100,
+          "type": "input",
+          "description": "Status word indicating drive state"
+        },
+        "actual_speed": {
+          "address": 101,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "RPM",
+          "description": "Actual motor speed"
+        },
+        "output_current": {
+          "address": 102,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "A",
+          "description": "Output current to motor"
+        },
+        "fault_code": {
+          "address": 103,
+          "type": "input",
+          "description": "Current fault code (0 = no fault)"
+        }
+      }
+    },
+    "3": {
+      "name": "Exhaust Fan VFD",
+      "manufacturer": "Siemens",
+      "model": "G120C",
+      "type": "siemens_g120",
+      "rated_power": 1.5,
+      "rated_current": 3.5,
+      "rated_voltage": 380,
+      "rated_frequency": 50,
+      "description": "Exhaust ventilation fan drive",
+      "registers": {
+        "speed_reference": {
+          "address": 1,
+          "type": "holding",
+          "scale": 0.01,
+          "unit": "%"
+        },
+        "control_word": {
+          "address": 0,
+          "type": "holding"
+        },
+        "status_word": {
+          "address": 100,
+          "type": "input"
+        },
+        "actual_speed": {
+          "address": 101,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "RPM"
+        }
+      }
+    }
+  },
+  "power_meters": {
+    "10": {
+      "name": "Main Electrical Panel",
+      "manufacturer": "Schneider Electric",
+      "model": "PM8000",
+      "type": "schneider_pm8000",
+      "description": "Main electrical panel power monitoring",
+      "registers": {
+        "voltage_l1": {
+          "address": 200,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "V",
+          "description": "L1 phase voltage"
+        },
+        "voltage_l2": {
+          "address": 201,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "V",
+          "description": "L2 phase voltage"
+        },
+        "voltage_l3": {
+          "address": 202,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "V",
+          "description": "L3 phase voltage"
+        },
+        "current_l1": {
+          "address": 210,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "A",
+          "description": "L1 phase current"
+        },
+        "current_l2": {
+          "address": 211,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "A",
+          "description": "L2 phase current"
+        },
+        "current_l3": {
+          "address": 212,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "A",
+          "description": "L3 phase current"
+        },
+        "active_power": {
+          "address": 220,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "kW",
+          "description": "Total active power"
+        },
+        "reactive_power": {
+          "address": 221,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "kVAR",
+          "description": "Total reactive power"
+        },
+        "apparent_power": {
+          "address": 222,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "kVA",
+          "description": "Total apparent power"
+        },
+        "power_factor": {
+          "address": 223,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "",
+          "description": "Power factor"
+        },
+        "frequency": {
+          "address": 224,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "Hz",
+          "description": "Line frequency"
+        },
+        "energy": {
+          "address": 230,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "kWh",
+          "description": "Total energy consumption"
+        }
+      }
+    },
+    "11": {
+      "name": "Motor Panel Power Meter",
+      "manufacturer": "ABB",
+      "model": "M2M",
+      "type": "abb_m2m",
+      "description": "Motor control panel power monitoring",
+      "registers": {
+        "active_power": {
+          "address": 100,
+          "type": "input",
+          "scale": 0.01,
+          "unit": "kW"
+        },
+        "power_factor": {
+          "address": 101,
+          "type": "input",
+          "scale": 0.01,
+          "unit": ""
+        },
+        "energy": {
+          "address": 102,
+          "type": "input",
+          "scale": 0.001,
+          "unit": "kWh"
+        }
+      }
+    }
+  },
+  "temperature_controllers": {
+    "20": {
+      "name": "Process Temperature Controller",
+      "manufacturer": "Omron",
+      "model": "E5CC",
+      "type": "omron_e5cc",
+      "description": "Process temperature control",
+      "registers": {
+        "process_value": {
+          "address": 0,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "°C",
+          "description": "Current temperature"
+        },
+        "setpoint": {
+          "address": 1,
+          "type": "holding",
+          "scale": 0.1,
+          "unit": "°C",
+          "description": "Temperature setpoint"
+        },
+        "output_value": {
+          "address": 2,
+          "type": "input",
+          "scale": 0.1,
+          "unit": "%",
+          "description": "Output percentage"
+        },
+        "alarm_status": {
+          "address": 10,
+          "type": "input",
+          "description": "Alarm status register"
+        }
+      }
+    }
+  },
+  "common_registers": {
+    "control_commands": {
+      "start": {"bit": 0, "description": "Start command"},
+      "stop": {"bit": 1, "description": "Stop command"},
+      "direction": {"bit": 2, "description": "Direction control"},
+      "fault_reset": {"bit": 7, "description": "Fault reset"}
+    },
+    "status_indicators": {
+      "ready": {"bit": 0, "description": "Drive ready"},
+      "running": {"bit": 1, "description": "Drive running"},
+      "direction": {"bit": 2, "description": "Direction status"},
+      "fault": {"bit": 3, "description": "Fault active"},
+      "warning": {"bit": 7, "description": "Warning active"}
+    }
+  },
+  "communication_settings": {
+    "default_timeout": 1.0,
+    "retry_count": 3,
+    "inter_frame_delay": 0.01,
+    "broadcast_address": 0,
+    "max_devices": 247
+  },
+  "safety_parameters": {
+    "emergency_stop_device": 99,
+    "safety_relay_inputs": [50, 51, 52],
+    "fault_acknowledgment": {
+      "required": true,
+      "timeout": 30
+    }
+  }
+}
