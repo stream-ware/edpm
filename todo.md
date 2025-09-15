@@ -1,0 +1,5 @@
+- zrefaktoryzuj pliki powyzej 500 linii kodu 
+- zadbaj o modularną architekturą łatwą do rozbudowy
+- zadbaj o dokumentacje i stworz paczkę paython w taki sposob, aby każdy LLm był w stanie w oparciu o ten projekt tworzyć projekty, ktore beda w pelni wykorzystywaly jego mozliwosci do budowy np e-kioskow ze sterowaniem sprzetu 
+- wydorbebnij z paczki przyklady i uzyj jej jako gotowe projekty z docker, kazdy projetk w odrebnym folderze, uzywajacy paczki python edpm
+- 

@@ -3,14 +3,15 @@
 ## 📋 Spis treści
 1. [Wprowadzenie](#wprowadzenie)
 2. [Architektura](#architektura)
-3. [Protokół EDPM Lite](#protokół-edpm-lite)
-4. [Instalacja](#instalacja)
-5. [Implementacje językowe](#implementacje-językowe)
-6. [Docker Setup](#docker-setup)
-7. [API Reference](#api-reference)
-8. [Przykłady użycia](#przykłady-użycia)
-9. [Testy](#testy)
-10. [Troubleshooting](#troubleshooting)
+3. [Web UI Dashboard](#web-ui-dashboard)
+4. [Protokół EDPM Lite](#protokół-edpm-lite)
+5. [Instalacja](#instalacja)
+6. [Implementacje językowe](#implementacje-językowe)
+7. [Docker Setup](#docker-setup)
+8. [API Reference](#api-reference)
+9. [Przykłady użycia](#przykłady-użycia)
+10. [Testy](#testy)
+11. [Troubleshooting](#troubleshooting)
 
 ## Wprowadzenie
 
@@ -18,25 +19,145 @@ EDPM Lite to **uproszczony** framework do zarządzania procesami i logowania, zo
 
 ### Kluczowe cechy:
 - ✅ **Jeden prosty protokół** - JSON over ZeroMQ/WebSocket
+- ✅ **Web UI Dashboard** - Zaawansowany interfejs do monitorowania w czasie rzeczywistym
+- ✅ **Protokoły rozszerzone** - I2C, I2S, RS485/Modbus z pełną symulacją
 - ✅ **Minimalne zależności** - tylko ZMQ lub WS
 - ✅ **5-minutowa implementacja** w nowym języku
 - ✅ **Docker ready** z symulatorem GPIO
 - ✅ **< 10MB RAM** na RPi3
+- ✅ **WebSocket Real-time** - Natychmiastowe aktualizacje danych
+- ✅ **Live Charts** - Wykresy GPIO, sensorów, audio w czasie rzeczywistym
 
 ## Architektura
 
 ```
-┌─────────────────────────────────────────────────┐
-│                 EDPM Lite Core                   │
-├─────────────────────────────────────────────────┤
-│          Simple Message Protocol (SMP)           │
-│         JSON ← ZeroMQ IPC / WebSocket           │
-├─────────────────────────────────────────────────┤
-│    Process Manager │ Logger │ Event Router      │
-├─────────────────────────────────────────────────┤
-│         SQLite (RAM) │ Config (JSON)            │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        EDPM Lite Core                           │
+├─────────────────────────────────────────────────────────────────┤
+│  🌐 Web UI Dashboard │ 🔌 WebSocket Server │ 📊 Real-time Data  │
+├─────────────────────────────────────────────────────────────────┤
+│          Simple Message Protocol (SMP)                          │
+│         JSON ← ZeroMQ IPC / WebSocket / HTTP                   │
+├─────────────────────────────────────────────────────────────────┤
+│ Process Manager │ Logger │ Event Router │ Protocol Handlers    │
+├─────────────────────────────────────────────────────────────────┤
+│  GPIO │ I2C │ I2S │ RS485 │ Protocol Simulators │ Live Charts  │
+├─────────────────────────────────────────────────────────────────┤
+│         SQLite (RAM) │ Config (JSON) │ Static Assets           │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### **Nowa Architektura z Web UI Dashboard:**
+
+- **🌐 Web UI Layer** - Modern responsive dashboard with real-time monitoring
+- **📡 WebSocket Server** - Real-time bidirectional communication
+- **📊 Live Data Streaming** - Continuous protocol data updates
+- **🎛️ Interactive Controls** - GPIO, I2C, I2S, RS485 control panels
+- **📈 Chart.js Integration** - Professional data visualization
+- **🔄 Event Broadcasting** - Multi-client real-time updates
+
+## Web UI Dashboard
+
+EDPM Lite oferuje zaawansowany Web UI Dashboard do monitorowania wszystkich protokołów w czasie rzeczywistym. Dashboard zapewnia profesjonalny interfejs do kontroli i monitorowania systemów embedded.
+
+### 🌐 **Główne Funkcje Dashboard**
+
+#### **Panele Monitorowania:**
+
+| Panel | Opis | Funkcje |
+|-------|------|---------|
+| 🔌 **GPIO Control** | Kontrola pinów GPIO | Toggle buttons, PWM control, status LEDs, live charts |
+| 🌡️ **I2C Sensors** | Monitorowanie sensorów I2C | BME280 temp/humidity/pressure, ADS1115 ADC, bus scanning |
+| 🔊 **I2S Audio** | Kontrola audio I2S | Test tones, recording, playback, FFT analysis, level meters |
+| ⚡ **RS485/Modbus** | Komunikacja przemysłowa | VFD control, power monitoring, device communication |
+| 📊 **System Stats** | Statystyki systemu | CPU/RAM usage, message rates, uptime, connection status |
+| 📝 **Live Logs** | Logi systemowe | Real-time colored logging with filtering |
+
+#### **Interaktywne Kontrolki:**
+- ✅ **Real-time updates** - Live data streaming via WebSocket
+- ✅ **Interactive controls** - Buttons, sliders, toggle switches  
+- ✅ **Live charts** - Time-series data visualization using Chart.js
+- ✅ **Multi-protocol support** - GPIO, I2C, I2S, RS485 in one interface
+- ✅ **Mobile responsive** - Works on tablets and phones
+- ✅ **Dark theme** - Professional appearance with modern styling
+
+### 🚀 **Uruchomienie Dashboard**
+
+#### **Lokalnie:**
+```bash
+# Start EDPM server with Web Dashboard
+python3 edpm-lite-server.py
+
+# Open dashboard in browser
+open http://localhost:8080
+```
+
+#### **Docker:**
+```bash
+# Start extended environment with dashboard
+make extended-up
+
+# Access dashboard
+open http://localhost:8080
+```
+
+### 🔄 **WebSocket Real-time Communication**
+
+Dashboard komunikuje się z serwerem EDPM poprzez WebSocket dla natychmiastowych aktualizacji:
+
+```javascript
+// WebSocket connection setup
+const ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+ws.onmessage = function(event) {
+    const msg = JSON.parse(event.data);
+    
+    if (msg.t === 'evt') {
+        handleEvent(msg.d);  // Update dashboard with real-time data
+    }
+};
+
+// Send command to server
+function sendCommand(action, params) {
+    const msg = {
+        v: 1,
+        t: 'cmd',
+        d: { action, ...params }
+    };
+    ws.send(JSON.stringify(msg));
+}
+```
+
+### 📊 **Live Data Visualization**
+
+Dashboard wykorzystuje Chart.js do wyświetlania danych w czasie rzeczywistym:
+
+- **GPIO Charts** - Status pinów, PWM signals, toggle history
+- **I2C Charts** - Temperature trends, sensor readings over time
+- **Audio Waveforms** - Real-time audio level monitoring, FFT analysis
+- **System Metrics** - CPU, RAM, message throughput charts
+
+### 🎮 **Przykłady Użycia Dashboard**
+
+#### **Testowanie GPIO:**
+1. Kliknij "Toggle Pin 17" aby zmienić stan pinu
+2. Obserwuj zmianę koloru LED na panelu
+3. Sprawdź live chart z historią zmian
+
+#### **Monitorowanie I2C:**
+1. Kliknij "Read All Sensors" aby odczytać sensory
+2. Obserwuj aktualizacje temperatury, wilgotności, ciśnienia
+3. Sprawdź wykres trendów czasowych
+
+#### **Kontrola Audio I2S:**
+1. Kliknij przyciski "440Hz", "880Hz" aby wygenerować tony
+2. Użyj "🎤 Record" aby nagrać audio
+3. Obserwuj waveform i poziomy audio w czasie rzeczywistym
+
+#### **Sterowanie RS485/Modbus:**
+1. Użyj suwaka "VFD Speed Control" aby kontrolować prędkość VFD
+2. Kliknij "▶️ Start VFD" / "⏹️ Stop VFD" aby kontrolować urządzenie
+3. Monitoruj odczyty mocy i status urządzeń
 
 ## Protokół EDPM Lite
 

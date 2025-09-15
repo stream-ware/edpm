@@ -2,25 +2,161 @@
 
 ## 📋 Spis treści
 1. [Architektura rozszerzona](#architektura-rozszerzona)
-2. [I2C - Komunikacja z sensorami](#i2c---komunikacja-z-sensorami)
-3. [I2S - Audio streaming](#i2s---audio-streaming)
-4. [RS485 - Komunikacja przemysłowa](#rs485---komunikacja-przemysłowa)
-5. [Docker Simulator](#docker-simulator)
-6. [Przykłady użycia](#przykłady-użycia)
+2. [Web UI Dashboard Integration](#web-ui-dashboard-integration)
+3. [I2C - Komunikacja z sensorami](#i2c---komunikacja-z-sensorami)
+4. [I2S - Audio streaming](#i2s---audio-streaming)
+5. [RS485 - Komunikacja przemysłowa](#rs485---komunikacja-przemysłowa)
+6. [Docker Simulator](#docker-simulator)
+7. [Przykłady użycia](#przykłady-użycia)
 
 ## Architektura rozszerzona
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                   EDPM Extended                       │
-├──────────────────────────────────────────────────────┤
-│  GPIO  │  I2C  │  I2S  │  RS485/Modbus  │  SPI      │
-├──────────────────────────────────────────────────────┤
-│            Protocol Abstraction Layer                 │
-├──────────────────────────────────────────────────────┤
-│  Physical HW  │  USB Adapters  │  Docker Simulator  │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          EDPM Extended                              │
+├─────────────────────────────────────────────────────────────────────┤
+│  🌐 Web UI Dashboard │ 📊 Real-time Charts │ 🎛️ Interactive Controls │
+├─────────────────────────────────────────────────────────────────────┤
+│  🔌 GPIO  │  🌡️ I2C  │  🔊 I2S  │  ⚡ RS485/Modbus  │  🔧 SPI     │
+├─────────────────────────────────────────────────────────────────────┤
+│            Protocol Abstraction Layer + WebSocket API               │
+├─────────────────────────────────────────────────────────────────────┤
+│  Physical HW  │  USB Adapters  │  Docker Simulator  │  Live Data   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+### **Extended Architecture with Web Dashboard:**
+
+- **🌐 Web UI Dashboard** - Unified interface for all protocols
+- **📊 Real-time Charts** - Live data visualization for all protocols
+- **🎛️ Interactive Controls** - Buttons, sliders, toggles for each protocol
+- **🔄 WebSocket Integration** - Real-time bidirectional communication
+- **🎮 Testing Suites** - Comprehensive protocol testing environments
+- **📈 Live Monitoring** - Continuous data streaming and visualization
+
+## Web UI Dashboard Integration
+
+EDPM Extended Protocols są w pełni zintegrowane z Web UI Dashboard, oferując kompletny interfejs do monitorowania i kontroli wszystkich protokołów przemysłowych w czasie rzeczywistym.
+
+### 🌐 **Dashboard Protocol Panels**
+
+#### **🔌 GPIO Control Panel**
+- **Real-time pin status** - Live monitoring wszystkich pinów GPIO
+- **Interactive controls** - Toggle buttons, PWM sliders
+- **Status indicators** - Kolorowe LED wskaźniki stanu
+- **Live charts** - Historia zmian pinów w czasie rzeczywistym
+
+```javascript
+// Example: Toggle GPIO pin via dashboard
+function toggleGPIO(pin) {
+    sendCommand('gpio_toggle', { pin });
+}
+```
+
+#### **🌡️ I2C Sensors Panel**
+- **BME280 Environmental** - Temperatura, wilgotność, ciśnienie
+- **ADS1115 ADC** - 4-kanałowy przetwornik A/D
+- **Bus scanning** - Automatyczne wykrywanie urządzeń I2C
+- **Live sensor charts** - Wykresy trendów czasowych
+
+```javascript
+// Example: Read all I2C sensors via dashboard
+function readAllSensors() {
+    sendCommand('read_all_sensors');
+    // Dashboard automatically updates with sensor data
+}
+```
+
+#### **🔊 I2S Audio Panel**
+- **Test tone generation** - Generowanie tonów testowych (440Hz, 880Hz, 1760Hz)
+- **Audio recording** - Nagrywanie i odtwarzanie audio
+- **Live waveform** - Real-time audio waveform display
+- **FFT analysis** - Analiza częstotliwościowa audio
+
+```javascript
+// Example: Play test tone via dashboard
+function playTestTone(frequency) {
+    sendCommand('play_tone', { frequency, duration: 1.0 });
+}
+```
+
+#### **⚡ RS485/Modbus Panel**
+- **VFD Control** - Kontrola falowników (Variable Frequency Drive)
+- **Power monitoring** - Monitorowanie poboru energii
+- **Device communication** - Komunikacja z urządzeniami przemysłowymi
+- **Speed control slider** - Interaktywna kontrola prędkości
+
+```javascript
+// Example: Control VFD speed via dashboard
+function updateVFDSpeed(speed) {
+    sendCommand('set_vfd_speed', { speed: parseInt(speed) });
+}
+```
+
+### 🔄 **Real-time Data Flow**
+
+Dashboard otrzymuje dane z protokołów w czasie rzeczywistym poprzez WebSocket:
+
+```javascript
+// Real-time protocol data handling
+ws.onmessage = function(event) {
+    const msg = JSON.parse(event.data);
+    
+    if (msg.t === 'evt') {
+        switch(msg.d.event) {
+            case 'sensor_reading':
+                updateI2CDisplay(msg.d);
+                break;
+            case 'audio_level':
+                updateAudioDisplay(msg.d);
+                break;
+            case 'modbus_reading':
+                updateModbusDisplay(msg.d);
+                break;
+            case 'gpio_change':
+                updateGPIODisplay(msg.d);
+                break;
+        }
+    }
+};
+```
+
+### 📊 **Live Charts & Visualization**
+
+Wszystkie protokoły mają dedykowane wykresy w czasie rzeczywistym:
+
+- **GPIO Charts** - PWM signals, digital states, toggle history
+- **I2C Temperature Charts** - Trends sensor data over time
+- **Audio Waveforms** - Real-time audio visualization
+- **System Performance** - CPU, RAM, message throughput
+
+### 🎮 **Interactive Protocol Testing**
+
+Dashboard oferuje kompletne środowisko testowe dla wszystkich protokołów:
+
+1. **I2C Testing Suite**:
+   - Scan I2C bus for devices
+   - Read individual sensors
+   - Monitor continuous data streams
+   - Configure sensor parameters
+
+2. **I2S Audio Testing**:
+   - Generate test tones at various frequencies
+   - Record and playback audio samples
+   - Real-time audio level monitoring
+   - FFT frequency analysis
+
+3. **RS485/Modbus Testing**:
+   - VFD speed control and monitoring
+   - Power meter readings
+   - Device status monitoring
+   - Industrial automation scenarios
+
+4. **GPIO Testing**:
+   - Pin toggle and PWM control
+   - Multi-pin patterns
+   - Timing analysis
+   - Status monitoring
 
 ## I2C - Komunikacja z sensorami
 

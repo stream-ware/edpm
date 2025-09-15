@@ -6,17 +6,20 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
-      - "8082:8082"  # Extended dashboard
+      - "8080:8080"      # Main EDPM server with web dashboard
+      - "8082:8082"      # Extended dashboard (backup)
     volumes:
       - /tmp:/tmp
       - /dev/shm:/dev/shm
+      - ./web:/app/web:ro     # Mount web dashboard files
+      - ./static:/app/static:ro  # Mount static assets if they exist
     environment:
       - EDPM_ENDPOINT=ipc:///tmp/edpm.ipc
       - EDPM_PORT=8080
       - GPIO_MODE=SIMULATOR
       - EDPM_DB=/dev/shm/edpm.db
       - EXTENDED_PROTOCOLS=true
+      - EDPM_DEBUG=true
     networks:
       - edpm-network
 

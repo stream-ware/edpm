@@ -257,10 +257,19 @@ class EDPMLiteServer:
         
         # Routes
         app.router.add_get('/', self.handle_index)
+        app.router.add_get('/dashboard', self.handle_index)  # Dashboard alias
         app.router.add_get('/ws', self.handle_websocket)
         app.router.add_get('/health', self.handle_health)
         app.router.add_get('/stats', self.handle_stats)
         app.router.add_post('/api/message', self.handle_api_message)
+        
+        # Static file serving for web assets
+        web_dir = os.path.join(os.path.dirname(__file__), 'web')
+        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        if os.path.exists(web_dir):
+            app.router.add_static('/web/', web_dir)
+        if os.path.exists(static_dir):
+            app.router.add_static('/static/', static_dir)
         
         # Start server
         runner = web.AppRunner(app)
@@ -354,6 +363,35 @@ class EDPMLiteServer:
             
             return Message(t="res", d={"status": "ok", "pin": pin, "value": value})
         
+        elif action == 'gpio_toggle':
+            pin = msg.d.get('pin')
+            
+            if pin is None:
+                return Message(t="res", d={"status": "error", "message": "Missing pin"})
+            
+            # Read current value and toggle
+            if hasattr(self.gpio, 'input'):
+                current = self.gpio.input(pin)
+            else:
+                current = self.gpio.pins.get(pin, {}).get('value', 0)
+            
+            new_value = 1 - current
+            
+            # Set new value
+            if hasattr(self.gpio, 'output'):
+                self.gpio.output(pin, new_value)
+            else:
+                self.gpio.pins[pin] = {'value': new_value}
+            
+            # Broadcast GPIO change event
+            await self.broadcast_event({
+                'event': 'gpio_change',
+                'pin': pin,
+                'value': new_value
+            })
+            
+            return Message(t="res", d={"status": "ok", "pin": pin, "value": new_value})
+
         elif action == 'gpio_pwm':
             pin = msg.d.get('pin')
             frequency = msg.d.get('frequency', 1000)
@@ -367,6 +405,15 @@ class EDPMLiteServer:
                 pwm.start(duty_cycle)
             
             return Message(t="res", d={"status": "ok", "pin": pin})
+        
+        # Protocol Control Commands
+        elif action in ['scan_i2c', 'read_all_sensors', 'play_tone', 'start_recording', 
+                       'stop_recording', 'set_vfd_speed', 'start_vfd', 'stop_vfd',
+                       'start_all_protocols', 'stop_all_protocols', 'test_i2c', 
+                       'test_i2s', 'test_rs485', 'generate_test_traffic']:
+            # Simulate protocol responses - in production these would interface with actual protocol handlers
+            await self.simulate_protocol_response(action, msg.d)
+            return Message(t="res", d={"status": "ok", "action": action})
         
         else:
             return Message(t="res", d={"status": "error", "message": f"Unknown action: {action}"})
@@ -393,6 +440,91 @@ class EDPMLiteServer:
         
         return Message(t="res", d={"status": "ok"})
     
+    async def broadcast_event(self, event_data: dict):
+        """Broadcast event to all connected clients"""
+        event_msg = Message(
+            t="evt", 
+            src="server",
+            d=event_data
+        )
+        await self.broadcast_to_clients(event_msg)
+    
+    async def simulate_protocol_response(self, action: str, params: dict):
+        """Simulate responses from protocol handlers for dashboard testing"""
+        import random
+        
+        if action == 'scan_i2c':
+            # Simulate I2C device scan
+            devices = [0x48, 0x76, 0x20]  # Common I2C addresses
+            await self.broadcast_event({
+                'event': 'i2c_scan_complete',
+                'devices': devices
+            })
+        
+        elif action == 'read_all_sensors':
+            # Simulate sensor readings
+            await self.broadcast_event({
+                'event': 'sensor_reading',
+                'temperature': round(20 + random.random() * 15, 1),
+                'humidity': round(40 + random.random() * 30, 0),
+                'pressure': round(1000 + random.random() * 50, 0),
+                'adc_ch0': round(1.5 + random.random() * 2, 2)
+            })
+        
+        elif action == 'play_tone':
+            frequency = params.get('frequency', 440)
+            await self.broadcast_event({
+                'event': 'audio_tone_started',
+                'frequency': frequency
+            })
+        
+        elif action in ['start_recording', 'stop_recording']:
+            await self.broadcast_event({
+                'event': 'audio_recording_change',
+                'recording': action == 'start_recording'
+            })
+        
+        elif action == 'set_vfd_speed':
+            speed = params.get('speed', 50)
+            await self.broadcast_event({
+                'event': 'modbus_reading',
+                'slave_id': 3,
+                'frequency_actual': speed * 0.6,  # Simulate actual frequency
+                'running': speed > 0
+            })
+        
+        elif action in ['start_vfd', 'stop_vfd']:
+            await self.broadcast_event({
+                'event': 'modbus_reading',
+                'slave_id': 3,
+                'running': action == 'start_vfd',
+                'frequency_actual': 30 if action == 'start_vfd' else 0
+            })
+        
+        elif action == 'generate_test_traffic':
+            # Generate sample data for all protocols
+            await asyncio.sleep(0.1)
+            await self.broadcast_event({
+                'event': 'sensor_reading',
+                'temperature': round(22.5 + random.random() * 5, 1),
+                'humidity': round(45 + random.random() * 20, 0),
+                'pressure': round(1013 + random.random() * 20, 0)
+            })
+            
+            await asyncio.sleep(0.1)
+            await self.broadcast_event({
+                'event': 'audio_level',
+                'db_level': round(-20 + random.random() * 15, 1),
+                'dominant_frequency': round(400 + random.random() * 800, 0)
+            })
+            
+            await asyncio.sleep(0.1)
+            await self.broadcast_event({
+                'event': 'modbus_reading',
+                'slave_id': 1,
+                'temperature': round(25 + random.random() * 10, 1)
+            })
+    
     async def broadcast_to_clients(self, msg: Message):
         """Broadcast message to all WebSocket clients"""
         if not self.clients:
@@ -409,135 +541,43 @@ class EDPMLiteServer:
         self.clients -= disconnected
     
     async def handle_index(self, request):
-        """Serve simple web UI"""
-        html = '''
+        """Serve the extended protocol dashboard"""
+        dashboard_path = os.path.join(os.path.dirname(__file__), 'web', 'dashboard.html')
+        try:
+            with open(dashboard_path, 'r') as f:
+                html = f.read()
+            return web.Response(text=html, content_type='text/html')
+        except FileNotFoundError:
+            # Fallback to basic interface if dashboard not found
+            return web.Response(text=self.get_basic_interface(), content_type='text/html')
+    
+    def get_basic_interface(self):
+        """Basic web interface fallback"""
+        return '''
         <!DOCTYPE html>
         <html>
         <head>
             <title>EDPM Lite Server</title>
             <style>
                 body { font-family: monospace; background: #1a1a1a; color: #0f0; padding: 20px; }
-                .container { max-width: 1200px; margin: 0 auto; }
+                .container { max-width: 800px; margin: 0 auto; }
                 h1 { color: #0f0; text-shadow: 0 0 10px #0f0; }
                 .stats { background: #000; padding: 20px; border: 1px solid #0f0; border-radius: 5px; }
-                .log { background: #000; padding: 10px; margin: 10px 0; border-left: 3px solid #0f0; }
                 button { background: #0f0; color: #000; border: none; padding: 10px 20px; cursor: pointer; }
-                button:hover { background: #0a0; }
-                input { background: #000; color: #0f0; border: 1px solid #0f0; padding: 5px; }
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>EDPM Lite Server</h1>
                 <div class="stats">
-                    <p>Status: <span id="status">Connecting...</span></p>
-                    <p>Messages: <span id="messages">0</span></p>
-                    <p>Uptime: <span id="uptime">0s</span></p>
+                    <p>Status: Running</p>
+                    <p>Dashboard: /web/dashboard.html not found</p>
+                    <p>WebSocket: Available at /ws</p>
                 </div>
-                
-                <h2>GPIO Control</h2>
-                <div>
-                    Pin: <input type="number" id="pin" value="17" min="0" max="27">
-                    Value: <input type="number" id="value" value="1" min="0" max="1">
-                    <button onclick="setGPIO()">Set GPIO</button>
-                    <button onclick="getGPIO()">Get GPIO</button>
-                </div>
-                
-                <h2>Logs</h2>
-                <div id="logs"></div>
             </div>
-            
-            <script>
-                const ws = new WebSocket('ws://' + window.location.host + '/ws');
-                let messageCount = 0;
-                const startTime = Date.now();
-                
-                ws.onopen = () => {
-                    document.getElementById('status').textContent = 'Connected';
-                    document.getElementById('status').style.color = '#0f0';
-                };
-                
-                ws.onmessage = (event) => {
-                    const msg = JSON.parse(event.data);
-                    messageCount++;
-                    document.getElementById('messages').textContent = messageCount;
-                    
-                    if (msg.t === 'log') {
-                        addLog(msg.d.level, msg.d.msg);
-                    }
-                };
-                
-                ws.onerror = () => {
-                    document.getElementById('status').textContent = 'Error';
-                    document.getElementById('status').style.color = '#f00';
-                };
-                
-                ws.onclose = () => {
-                    document.getElementById('status').textContent = 'Disconnected';
-                    document.getElementById('status').style.color = '#fa0';
-                };
-                
-                function setGPIO() {
-                    const pin = document.getElementById('pin').value;
-                    const value = document.getElementById('value').value;
-                    
-                    const msg = {
-                        v: 1,
-                        t: 'cmd',
-                        id: Date.now().toString(),
-                        src: 'web',
-                        ts: Date.now() / 1000,
-                        d: {
-                            action: 'gpio_set',
-                            pin: parseInt(pin),
-                            value: parseInt(value)
-                        }
-                    };
-                    
-                    ws.send(JSON.stringify(msg));
-                    addLog('info', `Set GPIO ${pin} to ${value}`);
-                }
-                
-                function getGPIO() {
-                    const pin = document.getElementById('pin').value;
-                    
-                    const msg = {
-                        v: 1,
-                        t: 'cmd',
-                        id: Date.now().toString(),
-                        src: 'web',
-                        ts: Date.now() / 1000,
-                        d: {
-                            action: 'gpio_get',
-                            pin: parseInt(pin)
-                        }
-                    };
-                    
-                    ws.send(JSON.stringify(msg));
-                }
-                
-                function addLog(level, message) {
-                    const logs = document.getElementById('logs');
-                    const log = document.createElement('div');
-                    log.className = 'log';
-                    log.innerHTML = `<span style="color: ${level === 'error' ? '#f00' : '#0f0'}">[${level}]</span> ${message}`;
-                    logs.insertBefore(log, logs.firstChild);
-                    
-                    if (logs.children.length > 10) {
-                        logs.removeChild(logs.lastChild);
-                    }
-                }
-                
-                // Update uptime
-                setInterval(() => {
-                    const uptime = Math.floor((Date.now() - startTime) / 1000);
-                    document.getElementById('uptime').textContent = uptime + 's';
-                }, 1000);
-            </script>
         </body>
         </html>
         '''
-        return web.Response(text=html, content_type='text/html')
     
     async def handle_websocket(self, request):
         """Handle WebSocket connections"""
